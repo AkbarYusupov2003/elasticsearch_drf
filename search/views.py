@@ -25,6 +25,21 @@ class ContentDocumentView(DocumentViewSet):
         if search_query:
             q = Q("match", title_ru={"query": search_query, "fuzziness": "0"})#| #Q("match", description_ru={"query": search_query, "fuzziness": "1"})
             qs = qs.query(q)
+            print("QS: ", qs.to_dict())
         return qs
 
 
+# class SoftContentDocumentView(DocumentViewSet):
+#     document = documents.SoftContentDocument
+#     serializer_class = serializers.ContentDocumentSerializer
+#     pagination_class = PageNumberPagination
+
+#     def get_queryset(self):
+#         qs = super().get_queryset()
+#         search_query = self.request.query_params.get('search', None)
+        
+#         if search_query:
+#             q = Q("match", title_ru={"query": search_query, "fuzziness": "0"})#| #Q("match", description_ru={"query": search_query, "fuzziness": "1"})
+#             qs = qs.query(q)
+#             print("QS: ", qs.to_dict())
+#         return qs

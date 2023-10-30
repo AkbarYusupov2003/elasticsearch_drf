@@ -18,22 +18,9 @@ class ContentDocument(Document):
             'suggest': fields.CompletionField(),
         }
     )
-    # description_ru = fields.TextField(
-    #     analyzer=analyzers.autocomplete_analyzer,
-    #     attr='description_ru',
-    #     fields={
-    #         'raw': fields.KeywordField(required=True, ),
-    #         'suggest': fields.CompletionField(),
-    #     }
-    # )
     
     class Index:
         name = "contents"
-        # settings = {
-        #     # "number_of_shards": 1,
-        #     # "number_of_replicas": 0,
-        #     'max_ngram_diff': 20 
-        # }
 
     class Django:
         model = models.Content

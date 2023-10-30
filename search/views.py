@@ -23,7 +23,7 @@ class ContentDocumentView(DocumentViewSet):
         search_query = self.request.query_params.get('search', None)
         
         if search_query:
-            q = Q("match", title_ru={"query": search_query, "fuzziness": "auto"})#| #Q("match", description_ru={"query": search_query, "fuzziness": "1"})
+            q = Q("match", title_ru={"query": search_query, "fuzziness": "0"})#| #Q("match", description_ru={"query": search_query, "fuzziness": "1"})
             #qs = qs.query(q)
             qs = qs.query(q)
             # .filter(

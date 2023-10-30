@@ -24,18 +24,7 @@ class ContentDocumentView(DocumentViewSet):
         
         if search_query:
             q = Q("match", title_ru={"query": search_query, "fuzziness": "0"})#| #Q("match", description_ru={"query": search_query, "fuzziness": "1"})
-            #qs = qs.query(q)
             qs = qs.query(q)
-            # .filter(
-            #     "script", 
-            #     script="""
-            #         def docval = doc['text.keyword'].value;
-            #         def length = docval.length();
-            #         def index = (float) docval.indexOf('title_ru');
-            #         // the sooner the word appears the better so 'invert' the 'index'
-            #         return index > -1 ? (1 / index) : 0;
-            #     """
-            # )
         return qs
 
 

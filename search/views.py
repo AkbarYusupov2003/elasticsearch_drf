@@ -25,7 +25,6 @@ class ContentDocumentView(DocumentViewSet):
         if search_query:
             q = Q("match", title_ru={"query": search_query, "fuzziness": "0"})#| #Q("match", description_ru={"query": search_query, "fuzziness": "1"})
             qs = qs.query(q)
-            print("QS: ", qs.to_dict())
         return qs
 
 

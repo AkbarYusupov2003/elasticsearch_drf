@@ -29,11 +29,11 @@ class ContentDocument(Document):
     
     class Index:
         name = "contents"
-        settings = {
-            # "number_of_shards": 1,
-            # "number_of_replicas": 0,
-            'max_ngram_diff': 20 
-        }
+        # settings = {
+        #     # "number_of_shards": 1,
+        #     # "number_of_replicas": 0,
+        #     'max_ngram_diff': 20 
+        # }
 
     class Django:
         model = models.Content

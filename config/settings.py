@@ -64,7 +64,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "content_search_drf",
+        "NAME": "content_search_drf", #"new_content_search_drf",
         "USER": "postgres",
         "PASSWORD": "123456",
         "HOST": "localhost",

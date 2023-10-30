@@ -9,7 +9,7 @@ from search import models
 from search import serializers
 from search import documents
 
-
+from elasticsearch_dsl.query import MoreLikeThis
 # 1.Сначала предлагать по началу строки, 
 # 2.потом по середине и в конце строки, 
 # 3.потом по описанию (description)
@@ -23,7 +23,8 @@ class ContentDocumentView(DocumentViewSet):
         search_query = self.request.query_params.get('search', None)
         
         if search_query:
-            q = Q("match", title_ru={"query": search_query, "fuzziness": "0"})#| #Q("match", description_ru={"query": search_query, "fuzziness": "1"})
+            q = Q("match", title_ru={"query": search_query, "fuzziness": "auto"})#| #Q("match", description_ru={"query": search_query, "fuzziness": "1"})
+            #q = MoreLikeThis(like=search_query, fields=["title_ru"])
             qs = qs.query(q)
         return qs
 

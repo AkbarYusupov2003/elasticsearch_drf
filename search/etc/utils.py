@@ -6,7 +6,7 @@ import shlex
 from pathlib import Path
 from django.conf import settings
 
-bento_prefix = settings.BENTO_PREFIX
+bento_prefix = "BENTO_PREFIX" #settings.BENTO_PREFIX
 
 
 def erase_content(content_path):

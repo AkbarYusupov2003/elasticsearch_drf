@@ -1,1 +1,39 @@
 python manage.py search_index --rebuild
+
+1. Перенести поиск анализаторов в одно поле ( в один документ )
+
+
+2. Заменить операции difference, union т.к. из-за них запрос становится медленным или 
+
+-------------------------------------------------------------------------------------
+Искать в Elasticsearch по title ---> возвращать из Elasticsearch content_ids ---> Делать запрос в postgres для получению объектов
+
+
+
+asgiref==3.7.2
+backports.zoneinfo==0.2.1
+certifi==2023.7.22
+Django==4.2.6
+django-appconf==1.0.5
+django-colorfield==0.10.1
+django-elasticsearch-dsl==8.0
+django-elasticsearch-dsl-drf==0.22.5
+django-imagekit==5.0.0
+django-nine==0.2.7
+django-stdimage==6.0.1
+djangorestframework==3.14.0
+elastic-transport==8.10.0
+elasticsearch==8.10.1
+elasticsearch-dsl==8.9.0
+packaging==23.2
+pilkit==3.0
+Pillow==10.1.0
+psycopg2==2.9.9
+python-dateutil==2.8.2
+pytils==0.4.1
+pytz==2023.3.post1
+six==1.16.0
+sqlparse==0.4.4
+typing-extensions==4.8.0
+tzdata==2023.3
+urllib3==2.0.7

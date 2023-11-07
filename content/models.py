@@ -6,23 +6,27 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from .etc.validators import validate_image_extension
+from content.etc.validators import validate_image_extension
 from pytils.translit import slugify
 # from apps.utils.storage import OverwriteStorage
-from .etc.utils import rmdir, erase_content
+from content.etc.utils import rmdir, erase_content
 
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFit, ResizeToFill, Transpose
 from django.core.files.images import get_image_dimensions
-from .etc.filename_path import *
-from .etc.country_choices import COUNTRY_CHOICES
+from content.etc.filename_path import *
+from content.etc.country_choices import COUNTRY_CHOICES
 from stdimage import StdImageField
 from colorfield.fields import ColorField
 
 
-lang = settings.LOCALES
+lang = {
+    "ru": "Русский",
+    "en": "Русский",
+    "uz": "Русский",
+}
 
-video_quality = settings.VIDEO_QUALITY
+video_quality = ""# settings.VIDEO_QUALITY
 
 AGE_RESTRICTIONS = [
     (0, '0+'),
@@ -43,6 +47,8 @@ class AllowedCountry(models.Model):
     class Meta:
         verbose_name = 'Страна для разрешения'
         verbose_name_plural = 'Страны для разрешения'
+    
+
 
 
 class ContentSubscription(models.Model):
@@ -76,8 +82,6 @@ class CrowdVideo(models.Model):
     duration = models.PositiveIntegerField("Длительность", default=0)
     is_mark_for_deletion = models.BooleanField(default=False)
 
-    for size in video_quality:
-        locals()[f'codec_{size}'] = models.CharField(f'Кодек {size}', max_length=60, null=True, blank=True)
 
     def __str__(self):
         return self.slug
@@ -144,11 +148,6 @@ class Genre(models.Model):
 class Sponsor(models.Model):
     name = models.CharField('Название', max_length=200)
     slug = models.SlugField('SLUG', unique=True, max_length=255, blank=True, )
-    logo = StdImageField("Логотип", upload_to=sponsor_filename, storage=django.core.files.storage.FileSystemStorage(),
-                         validators=[validate_image_extension], blank=True, null=True,
-                         help_text="Рекомендуемое соотношение сторон 1x1",
-                         variations={'thumb': (50, 50), }
-                         )
     ordering = models.PositiveSmallIntegerField("Позиция в списке", default=10)
 
     def save(self, *args, **kwargs):
@@ -200,27 +199,12 @@ class Category(models.Model):
     for iso in lang:
         locals()[f'name_{iso}'] = models.CharField(f'Название на [{lang[iso]}]', max_length=70)
     slug = models.SlugField('SLUG', unique=True, max_length=100, blank=True, )
-    icon = models.ImageField('Картинка icon', upload_to=category_filename, storage=django.core.files.storage.FileSystemStorage(), null=True,
+    icon = models.ImageField('Картинка icon', storage=django.core.files.storage.FileSystemStorage(), null=True,
                              help_text="Поддерживается размер icon 90x90 px")
     genres = models.ManyToManyField(Genre, verbose_name="Жанры", related_name='cat_genres', blank=True)
     sponsors = models.ManyToManyField(Sponsor, verbose_name="Спонсоры", related_name='cat_sponsors', blank=True)
     countries = models.ManyToManyField(Country, verbose_name="Страны", related_name='cat_countries', blank=True)
     ordering = models.PositiveSmallIntegerField("Позиция в списке", default=10)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name_ru)
-        if not self.pk:
-            super().save(using='content_db')
-            self.save(using='adv_db')
-        else:
-            super().save(using='content_db')
-            super().save(using='adv_db')
-            
-    def delete(self, *args, **kwargs):
-        super().delete(using='content_db')
-        from advertisement.models import AdvCategory
-        AdvCategory.objects.get(slug=self.slug).delete(using='adv_db')
 
     def clean(self):
         if not self.icon:
@@ -248,7 +232,7 @@ class Person(models.Model):
         locals()[f'name_{iso}'] = models.CharField(f'Имя на [{lang[iso]}]', max_length=100)
     slug = models.SlugField('SLUG', unique=True, max_length=100, blank=True, )
     ordering = models.PositiveSmallIntegerField("Позиция в списке", default=10)
-    profile_pic = StdImageField('Фото', upload_to=person_filename, storage=django.core.files.storage.FileSystemStorage(),
+    profile_pic = StdImageField('Фото', storage=django.core.files.storage.FileSystemStorage(),
                                 help_text="Соотношение сторон фото 1х1", blank=True, null=True,
                                 variations={
                                     'resized': (600, 600), 
@@ -307,50 +291,40 @@ class Content(models.Model):
 
     logo_image_square = StdImageField('Лого медиа квадрат',
                                       max_length=200,
-                                      upload_to=content_logo_image_square_filename,
                                       default="static/placeholders/logo_image_square.png",
                                       storage=django.core.files.storage.FileSystemStorage(),
-                                      validators=[validate_image_extension],
                                       help_text="Рекомендуемое соотношение сторон 1x1"
                                                 "<br>Минимальный размер 600px",
                                       variations={'resized': (600, 600), }
                                       )
     logo_image_rectangle = StdImageField('Лого медиа прямоуг',
                                          max_length=200,
-                                         upload_to=content_logo_image_rectangle_filename,
                                          default="static/placeholders/logo_image_rectangle.png",
                                          storage=django.core.files.storage.FileSystemStorage(),
-                                         validators=[validate_image_extension],
                                          help_text="Рекомендуемое соотношение сторон 16х9"
                                                    "<br>Минимальный размер 600px",
                                          variations={'resized': (600, -1), }
                                          )
     poster_v = StdImageField('Постер вертикальный',
                              max_length=200,
-                             upload_to=content_poster_v_filename,
                              default="static/placeholders/poster_v.jpg",
                              storage=django.core.files.storage.FileSystemStorage(),
-                             validators=[validate_image_extension],
                              help_text="Рекомендуемое соотношение сторон 4x7"
                                        "<br>Минимальный размер 240,360px",
                              variations={'resized': (240, 360), }
                              )
     poster_h = StdImageField('Постер горизонтальный',
                              max_length=200,
-                             upload_to=content_poster_h_filename,
                              default="static/placeholders/poster_h.jpg",
                              storage=django.core.files.storage.FileSystemStorage(),
-                             validators=[validate_image_extension],
                              help_text="Рекомендуемое соотношение сторон 16х9"
                                        "<br>Минимальный размер 336x189px",
                              variations={'resized': (336, 189), 'promo': (600, 300), }
                              )
     bg_image = StdImageField('Фоновая картинка',
                              max_length=200,
-                             upload_to=content_bg_image_filename,
                              default="static/placeholders/bg_image.jpg",
                              storage=django.core.files.storage.FileSystemStorage(),
-                             validators=[validate_image_extension],
                              help_text="Рекомендуемое соотношение сторон 16х9"
                                        "<br>Минимальный размер 1920px",
                              variations={'resized': (600, 600), }
@@ -372,7 +346,7 @@ class Content(models.Model):
     is_serial = models.BooleanField("Это сериал? ", choices=IS_SERIAL_CHOICES, )
     allowed_countries = models.ManyToManyField(AllowedCountry, verbose_name='Разрешенные страны', blank=True)
     allowed_subscriptions = models.ManyToManyField(ContentSubscription, verbose_name='Разрешенные подписки', blank=False)
-    ordering = models.PositiveIntegerField("Позиция в списке", default=100)
+    # ordering = models.PositiveIntegerField("Позиция в списке", default=100)
 
     def __str__(self):
         for iso in lang:
@@ -380,47 +354,13 @@ class Content(models.Model):
                 return f'{self.id} - {getattr(self, f"title_{iso}", None)}'
         return self.id
 
-    def save(self, *args, **kwargs):
-        if not self.poster_v.closed:
-            new_poster_v = self.reduce_image_size(self.poster_v, 'jpeg')
-            self.poster_v = new_poster_v
-        if not self.poster_h.closed:
-            new_poster_h = self.reduce_image_size(self.poster_h, 'jpeg')
-            self.poster_h = new_poster_h
-        if not self.logo_image_square.closed:
-            logo_image_square = self.reduce_image_size(self.logo_image_square, 'png')
-            self.logo_image_square = logo_image_square
-        if not self.logo_image_rectangle.closed:
-            logo_image_rectangle = self.reduce_image_size(self.logo_image_rectangle, 'png')
-            self.logo_image_rectangle = logo_image_rectangle
-        if not self.bg_image.closed:
-            bg_image = self.reduce_image_size(self.bg_image, 'jpeg')
-            self.bg_image = bg_image
-
-        if not self.slug:
-            self.slug = slugify(self.title_ru)
-        super().save(*args, **kwargs)
-
-    def reduce_image_size(self, input_image, ext):
-        from PIL import Image
-        from io import BytesIO
-        from django.core.files import File
-        img = Image.open(input_image)
-        thumb_io = BytesIO()
-        # If you want to change compress quality
-        img.save(thumb_io, ext, quality=50)
-        new_image = File(thumb_io, name=input_image.name)
-        return new_image
-
-    def delete(self, using=None, keep_parents=False):
-        erase_content(f"contents/{self.slug}")
-        super().delete()
-
     class Meta:
-        ordering = ['-id']
+        #ordering = ['-id']
         verbose_name = "Контент"
         verbose_name_plural = "!Контент 0 Full"
-
+    
+    
+    
 
 class ContentInfoFilm(Content):
     class Meta:
@@ -661,72 +601,6 @@ class Episode(models.Model):
     final_start_time = models.TimeField('Начальное время final', default=time(0, 0, 0))
     draft = models.BooleanField("Черновик", default=False)
 
-    def validate_unique(self, exclude=None):
-        qs = self.seasons.episodes.all()
-        if self.pk is None:
-            if qs.filter(episode_numb=self.episode_numb).exists():
-                raise ValidationError("Номер эпизода должен быть уникальным")
-        # if self.pk:
-        #     obj = Episode.objects.get(id=self.pk)
-        #     if obj.episode_numb != self.episode_numb:
-        #         raise ValidationError(
-        #             f"Номер эпизода не может быть изменен. Номер эпизода был равен = <{obj.episode_numb}>")
-
-    # def __str__(self):
-    #     return f'{self.title_ru}'
-    #     if self.seasons:
-    #         return f'id_{self.id} - season_{self.seasons} - episode_{self.episode_numb} - {self.seasons.serial}'
-    #     else:
-    #         return f'id_{self.id} - season_{self.seasons} - episode_{self.episode_numb} - Serial None'
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.video_hls:
-            self.duration = self.video_hls.duration
-        else:
-            self.duration = 0
-
-        # Subtitles
-        for iso in lang:
-            if getattr(self, f'sub_{iso}').name:
-                hls_subs(Path(getattr(self, f'sub_{iso}').name).name,
-                         # getattr(self, f'sub_{iso}').path.replace(f"sub_{iso}.vtt", f'sub_{iso}.m3u8'),
-                         getattr(self, f'sub_{iso}').path.replace(f".vtt", f'.m3u8'),
-                         self.duration)
-                setattr(self, f'is_sub_{iso}', True)
-            else:
-                setattr(self, f'is_sub_{iso}', False)
-
-        # picture
-        if not Path(self.picture.path).exists() if self.picture else not self.picture:
-        # if not self.picture:
-            import time
-            from .tasks import make_screenshot_from_video
-            name = f"contents_meta/{self.seasons.serial.slug}/images/episode_{self.seasons.season_numb}_{self.episode_numb}.jpg"
-            # first_dir = None
-            # for quality in settings.VIDEO_QUALITY:
-            #     if getattr(self.video_hls, f'codec_{quality}', False):
-            #         first_dir = f"{quality}_{getattr(self.video_hls, f'codec_{quality}', '')}"
-            #         break
-            # if first_dir is not None:
-            #     hls_path = f"{settings.MEDIA_ROOT}/video_hls/{self.video_hls.slug}/{first_dir}/stream.m3u8"
-            #     make_screenshot_from_video(
-            #         f"{settings.MEDIA_ROOT}/video_hls/{self.video_hls.slug}/{first_dir}/stream.m3u8",
-            #         f"{settings.MEDIA_ROOT}/{name}",
-            #         time.strftime('%H:%M:%S', time.gmtime(self.duration // 2)))
-            make_screenshot_from_video.delay(
-                f"https://api.splay.uz/en/api/v1/content/crowd-hls/{self.video_hls_id}/{settings.ADMIN_SECRET_KEY}",
-                f"{settings.MEDIA_ROOT}/{name}",
-                time.strftime('%H:%M:%S', time.gmtime(self.duration // 2)))
-            self.picture = name
-
-        # audio
-        if self.video_hls and not self.audio_uz:
-            try:
-                self.audio_uz = CrowdAudio.objects.get(slug=self.video_hls.slug)
-            except CrowdAudio.DoesNotExist as e:
-                print(e)
-        return super().save()
 
     class Meta:
         ordering = ['episode_numb', '-id']
@@ -754,33 +628,6 @@ class Film(models.Model):
     opening_start_time = models.TimeField('Начальное время opening', default=time(0, 0, 0))
     opening_end_time = models.TimeField('Конечное время opening', default=time(0, 0, 0))
     final_start_time = models.TimeField('Начальное время final', default=time(0, 0, 0))
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.video_hls:
-            self.duration = self.video_hls.duration
-        else:
-            self.duration = 0
-
-        # Subtitles
-        for iso in lang:
-            if getattr(self, f'sub_{iso}').name:
-                hls_subs(Path(getattr(self, f'sub_{iso}').name).name,
-                         # getattr(self, f'sub_{iso}').path.replace(f"sub_{iso}.vtt", f'sub_{iso}.m3u8'),
-                         getattr(self, f'sub_{iso}').path.replace(f".vtt", f'.m3u8'),
-                         self.duration)
-                setattr(self, f'is_sub_{iso}', True)
-            else:
-                setattr(self, f'is_sub_{iso}', False)
-
-        # audio
-        if self.video_hls and not self.audio_uz:
-            try:
-                self.audio_uz = CrowdAudio.objects.get(slug=self.video_hls.slug)
-            except CrowdAudio.DoesNotExist as e:
-                print(e)
-
-        return super().save()
 
     class Meta:
         verbose_name = 'Фильм'
@@ -815,74 +662,6 @@ class Trailer(models.Model):
     trailer_numb = models.PositiveSmallIntegerField("Номер трейлера",
                                                     help_text="Номер трейлера должен быть уникальным <br>"
                                                               "Номер трейлера 1 - Тизер", )
-
-    def validate_unique(self, exclude=None):
-        qs = self.content.trailer.all()
-        # if not qs:
-        #     if self.trailer_numb != 1:
-        #         raise ValidationError("Номер первого трейлера должен быть '1' - Тизер")
-        if self.pk is None:
-            if qs.filter(trailer_numb=self.trailer_numb).exists():
-                raise ValidationError("Номер трейлера должен быть уникальным")
-        # if self.pk:
-        #     obj = Trailer.objects.get(id=self.pk)
-        #     if obj.trailer_numb != self.trailer_numb:
-        #         raise ValidationError(f"Номер трейлера не может быть изменен. "
-        #                               f"Номер трейлера был равен = <{obj.trailer_numb}>")
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.video_hls:
-            self.duration = self.video_hls.duration
-        else:
-            self.duration = 0
-
-        # Subtitles
-        for iso in lang:
-            if getattr(self, f'sub_{iso}').name:
-                hls_subs(Path(getattr(self, f'sub_{iso}').name).name,
-                         # getattr(self, f'sub_{iso}').path.replace(f"sub_{iso}.vtt", f'sub_{iso}.m3u8'),
-                         getattr(self, f'sub_{iso}').path.replace(f".vtt", f'.m3u8'),
-                         self.duration)
-                setattr(self, f'is_sub_{iso}', True)
-            else:
-                setattr(self, f'is_sub_{iso}', False)
-
-        # picture
-        if not Path(self.picture.path).exists() if self.picture else not self.picture:
-            import time
-            from .tasks import make_screenshot_from_video
-            name = f"contents_meta/{self.content.slug}/images/trailer_picture_{self.trailer_numb}.jpg"
-            # first_dir = None
-            # for quality in settings.VIDEO_QUALITY:
-            #     if getattr(self.video_hls, f'codec_{quality}', False):
-            #         first_dir = f"{quality}_{getattr(self.video_hls, f'codec_{quality}', '')}"
-            #         break
-            # if first_dir is not None:
-            #     hls_path = f"{settings.MEDIA_ROOT}/video_hls/{self.video_hls.slug}/{first_dir}/stream.m3u8"
-            #     print(hls_path)
-            #     make_screenshot_from_video(
-            #         f"{settings.MEDIA_ROOT}/video_hls/{self.video_hls.slug}/{first_dir}/stream.m3u8",
-            #         f"{settings.MEDIA_ROOT}/{name}",
-            #         time.strftime('%H:%M:%S', time.gmtime(self.duration // 2)))
-            #     self.picture = name
-            make_screenshot_from_video.delay(
-                f"https://api.splay.uz/en/api/v1/content/crowd-hls/{self.video_hls_id}/{settings.ADMIN_SECRET_KEY}",
-                f"{settings.MEDIA_ROOT}/{name}",
-                time.strftime('%H:%M:%S', time.gmtime(self.duration // 2)))
-            self.picture = name
-
-        # audio
-        if self.video_hls and not self.audio_uz:
-            try:
-                self.audio_uz = CrowdAudio.objects.get(slug=self.video_hls.slug)
-            except CrowdAudio.DoesNotExist as e:
-                print(e)
-
-        return super().save()
-
-    # def __str__(self):
-    #     return f"numb_{self.trailer_numb} - id_{self.id}"
 
     class Meta:
         ordering = ('trailer_numb',)

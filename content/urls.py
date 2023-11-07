@@ -16,8 +16,6 @@ urlpatterns = [
     path("available-sponsors/<int:pk>/", views.AvailableSponsorsAPIView.as_view()),
     path("available-years/<int:pk>/", views.AvailableYearsAPIView.as_view()),
     #
-    path("test/", views.TestCacheView.as_view()),
-    # path("test/", cache_page(CACHE_TTL)(views.TestCacheView.as_view())),
     path("main/", views.MainAPIView.as_view()),
     path("categories/", views.CategoryListAPIView.as_view()),
     path("collections/", views.CollectionListAPIView.as_view()),

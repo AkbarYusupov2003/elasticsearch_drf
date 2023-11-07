@@ -16,7 +16,7 @@ from content import documents
 from content import mixins
 
 
-class ContentRetrieveView(RetrieveAPIView):
+class ContentRetrieveView(mixins.CacheViewMixin, RetrieveAPIView):
     serializer_class = serializers.WebContentSearchSerializer
     
     def get_queryset(self):
@@ -126,7 +126,7 @@ class ContentFilterView(mixins.CacheViewMixin, GenericAPIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class ContentMainSearchView(GenericAPIView):
+class ContentMainSearchView(mixins.CacheViewMixin, GenericAPIView):
     document =  documents.ContentDocument
     serializer_class = serializers.WebContentSearchSerializer
     pagination_class = LimitOffsetPagination
@@ -258,7 +258,7 @@ class ContentMainSearchView(GenericAPIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class AvailableCountriesAPIView(GenericAPIView):
+class AvailableCountriesAPIView(mixins.CacheViewMixin, GenericAPIView):
     serializer_class = serializers.CountrySerializer
     
     def get_queryset(self):
@@ -283,7 +283,7 @@ class AvailableCountriesAPIView(GenericAPIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class AvailableGenresAPIView(GenericAPIView):
+class AvailableGenresAPIView(mixins.CacheViewMixin, GenericAPIView):
     serializer_class = serializers.GenreSerializer
     
     def get_queryset(self):
@@ -308,7 +308,7 @@ class AvailableGenresAPIView(GenericAPIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class AvailableSponsorsAPIView(GenericAPIView):
+class AvailableSponsorsAPIView(mixins.CacheViewMixin, GenericAPIView):
     serializer_class = serializers.SponsorsSerializer
     
     def get_queryset(self):        
@@ -334,7 +334,7 @@ class AvailableSponsorsAPIView(GenericAPIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
 
-class AvailableYearsAPIView(ListAPIView):
+class AvailableYearsAPIView(mixins.CacheViewMixin, ListAPIView):
     
     def get_queryset(self):
         age_restrictions = 18
@@ -356,7 +356,7 @@ class AvailableYearsAPIView(ListAPIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class MainAPIView(APIView):
+class MainAPIView(mixins.CacheViewMixin, APIView):
     serializer_class = serializers.CategorySerializer
     
     def get(self, request, *args, **kwargs):
@@ -393,7 +393,7 @@ class MainAPIView(APIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class CategoryListAPIView(ListAPIView):
+class CategoryListAPIView(mixins.CacheViewMixin, ListAPIView):
     serializer_class = serializers.CategorySerializer
     pagination_class = LimitOffsetPagination
     
@@ -402,7 +402,7 @@ class CategoryListAPIView(ListAPIView):
         return categories
 
 
-class CollectionListAPIView(ListAPIView):
+class CollectionListAPIView(mixins.CacheViewMixin, ListAPIView):
     serializer_class = serializers.CollectionSerializer
     pagination_class = LimitOffsetPagination
     
@@ -411,7 +411,7 @@ class CollectionListAPIView(ListAPIView):
         return models.ContentCollection.objects.filter(is_kids=True if is_kids == "True" else False)
 
 
-class CollectionRetrieveAPIView(APIView):
+class CollectionRetrieveAPIView(mixins.CacheViewMixin, APIView):
     serializer_class = serializers.CollectionSerializer
     
     def get(self, request, *args, **kwargs):
@@ -446,7 +446,7 @@ class CollectionRetrieveAPIView(APIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class GenreListAPIView(ListAPIView):
+class GenreListAPIView(mixins.CacheViewMixin, ListAPIView):
     serializer_class = serializers.GenreListSerializer
     pagination_class = LimitOffsetPagination
     
@@ -454,7 +454,7 @@ class GenreListAPIView(ListAPIView):
         return models.Genre.objects.all()
 
 
-class GenreRetrieveAPIView(APIView):
+class GenreRetrieveAPIView(mixins.CacheViewMixin, APIView):
     serializer_class = serializers.GenreSerializer
     
     def get(self, request, *args, **kwargs):
@@ -486,10 +486,3 @@ class GenreRetrieveAPIView(APIView):
             return Response(res, status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
-
-
-class TestCacheView(mixins.CacheViewMixin, GenericAPIView):
-    
-    def get(self, request, *args, **kwargs):
-        print("HELLO")
-        return Response({"status": "testing"})

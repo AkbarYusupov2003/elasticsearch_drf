@@ -150,6 +150,16 @@ ELASTICSEARCH_INDEX_NAMES = {
     "content.genre": "genres",
 }
 
+VIDEO_QUALITY = {
+    '4k': (3840, 2160, 12832000),
+    '2k': (2560, 1440, 6074000),
+    '1080p': (1920, 1080, 2912000),
+    '720p': (1280, 720, 844000),
+    '480p': (854, 480, 514000),
+    '360p': (640, 360, 440000),
+    '240p': (426, 240, 146000),
+}
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",

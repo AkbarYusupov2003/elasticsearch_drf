@@ -26,7 +26,7 @@ lang = {
     "uz": "Узбекский",
 }
 
-video_quality = ""# settings.VIDEO_QUALITY
+video_quality = settings.VIDEO_QUALITY
 
 AGE_RESTRICTIONS = [
     (0, '0+'),
@@ -82,6 +82,8 @@ class CrowdVideo(models.Model):
     duration = models.PositiveIntegerField("Длительность", default=0)
     is_mark_for_deletion = models.BooleanField(default=False)
 
+    for size in video_quality:
+        locals()[f'codec_{size}'] = models.CharField(f'Кодек {size}', max_length=60, null=True, blank=True)
 
     def __str__(self):
         return self.slug

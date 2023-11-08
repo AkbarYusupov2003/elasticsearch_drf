@@ -26,12 +26,11 @@ class ContentAdmin(admin.ModelAdmin):
 #admin.site.register(models.ContentCollectionContent)
 #admin.site.register(models.Category)
 
+
 # ---------------------------------------------------------------------------------------
 # Film
 class FilmContentFilter(admin.SimpleListFilter):
-    
     title = 'Существует ли контент'
-
     parameter_name = 'content_exists'
 
     def lookups(self, request, model_admin):
@@ -57,9 +56,7 @@ class FilmAdmin(admin.ModelAdmin):
 
 # Trailer
 class TrailerContentFilter(admin.SimpleListFilter):
-    
     title = 'Существует ли контент'
-
     parameter_name = 'content_exists'
 
     def lookups(self, request, model_admin):
@@ -85,9 +82,7 @@ class TrailerAdmin(admin.ModelAdmin):
 
 # Episode
 class EpisodeContentFilter(admin.SimpleListFilter):
-    
     title = 'Существует ли сезон'
-
     parameter_name = 'season_exists'
 
     def lookups(self, request, model_admin):
@@ -110,12 +105,35 @@ class EpisodeAdmin(admin.ModelAdmin):
     list_display = ["id", "seasons", "video_hls"]
     list_filter = [EpisodeContentFilter]
     
-    
+# CrowdVideo
+class CrowdVideoQualityFilter(admin.SimpleListFilter):
+    title = 'Качество видео'
+    parameter_name = 'quality'
+
+    def lookups(self, request, model_admin):
+        qualities = []
+        for key in settings.VIDEO_QUALITY.keys():
+            qualities.append([key, key])
+        return qualities
+
+    def queryset(self, request, queryset):
+        print("QS: ", self.value(), settings.VIDEO_QUALITY.keys())
+        if self.value() in settings.VIDEO_QUALITY.keys():
+            print("HERE")
+            return queryset.exclude(**{f"codec_{self.value()}__isnull": True})
+        return queryset
+
+
 # ---------------------------------------------------------------------------------------
 @admin.register(models.CrowdVideo)
 class CrowdVideoAdmin(admin.ModelAdmin):
-    list_display = ["id", "slug", "duration"]
+    list_display = [
+        "id", "slug", "duration",
+        "codec_4k", "codec_2k", "codec_1080p", 
+        "codec_720p", "codec_480p", "codec_360p", "codec_240p",
+    ]
     list_display_links = "id", "slug",
+    list_filter = CrowdVideoQualityFilter,
     # list_filter = UnUsedVideo,
     search_fields = 'slug',
     readonly_fields = ['hls_player', 'get_related_contents', 'slug', 'duration']

@@ -22,8 +22,8 @@ from colorfield.fields import ColorField
 
 lang = {
     "ru": "Русский",
-    "en": "Русский",
-    "uz": "Русский",
+    "en": "Английский",
+    "uz": "Узбекский",
 }
 
 video_quality = ""# settings.VIDEO_QUALITY
@@ -60,7 +60,7 @@ class ContentSubscription(models.Model):
     limit_sessions = models.PositiveSmallIntegerField('Лимит сессий', default=3)
     price = models.PositiveIntegerField('Цена подписки в месяц в тийинах', )
     ordering = models.PositiveSmallIntegerField("Позиция в списке", default=10)
-    color = ColorField('Цвет', blank=True, null=True)
+    # color = ColorField('Цвет', blank=True, null=True)
     # color1 = ColorField('Градиент 1')
     # color2 = ColorField('Градиент 2')
     # color3 = ColorField('Градиент 3')
@@ -591,6 +591,7 @@ class Episode(models.Model):
                             )
 
     duration = models.PositiveSmallIntegerField("Длительность", default=0)
+    #
     seasons = models.ForeignKey(Season, related_name='episodes', on_delete=models.SET_NULL, null=True, blank=True)
     episode_numb = models.PositiveSmallIntegerField("Номер эпизода",
                                                     help_text='Номер эпизода должен быть уникальным')

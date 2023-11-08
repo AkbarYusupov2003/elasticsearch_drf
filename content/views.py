@@ -486,3 +486,6 @@ class GenreRetrieveAPIView(mixins.CacheViewMixin, APIView):
             return Response(res, status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+# Content->film/season-episode/trailer->

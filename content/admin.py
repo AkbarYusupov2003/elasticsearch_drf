@@ -107,7 +107,7 @@ class EpisodeAdmin(admin.ModelAdmin):
     
 # CrowdVideo
 class CrowdVideoQualityFilter(admin.SimpleListFilter):
-    title = 'Качество видео'
+    title = 'Максимальное качество видео'
     parameter_name = 'quality'
 
     def lookups(self, request, model_admin):
@@ -118,8 +118,13 @@ class CrowdVideoQualityFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() in settings.VIDEO_QUALITY.keys():
-            return queryset.exclude(**{f"codec_{self.value()}__isnull": True})
-        return queryset
+            for quality in settings.VIDEO_QUALITY.keys():
+                if self.value() != quality:
+                    queryset = queryset.exclude(**{f"codec_{quality}__isnull": False})
+                else:
+                    return queryset.exclude(**{f"codec_{self.value()}__isnull": True})
+        else:
+            return queryset
 
 
 # ---------------------------------------------------------------------------------------

@@ -45,8 +45,10 @@ medium_ngram_analyzer = analyzer(
     filter=['lowercase', "stop", "shingle", "snowball"]
 )
 
-# soft_ngram_analyzer = analyzer(
-#     'soft_ngram_analyzer',
-#     tokenizer=tokenizer('soft_ngram_analyzer_tokenizer', 'ngram', min_gram=3, max_gram=4),
-#     filter=['lowercase', "stop", "shingle", "snowball"]
-# )
+# person
+
+soft_ngram_analyzer = analyzer(
+    'soft_ngram_analyzer',
+    tokenizer=tokenizer('soft_ngram_analyzer_tokenizer', 'ngram', min_gram=3, max_gram=4),
+    filter=['lowercase', "stop", "shingle", "snowball"]
+)

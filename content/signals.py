@@ -21,8 +21,10 @@ def update_document(sender, **kwargs):
                     registry.delete(instance)
                 else:
                     registry.update(instance)
+        elif model_name == "person":
+            registry.update(instance)
 
-
+# TODO CHECK IF WORKS CORRECTLY
 @receiver(post_delete)
 def delete_document(sender, **kwargs):
     app_label = sender._meta.app_label
@@ -32,15 +34,15 @@ def delete_document(sender, **kwargs):
     if app_label == "content":
         if model_name == "content":
             registry.update(instance)
-            
-            
-# from django.core.management import call_command
+        elif model_name == "person":
+            registry.update(instance)
 
+
+# from django.core.management import call_command
 # TODO use: call_command("search_index", "--populate")
 
 
 # import time
-
 # def test():
 #     start_time = time.time()
 #     content = models.Content.objects.get(title_ru="Бог игроков")

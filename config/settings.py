@@ -147,7 +147,7 @@ ELASTICSEARCH_DSL = {
 
 ELASTICSEARCH_INDEX_NAMES = {
     "content.content": "contents",
-    "content.genre": "genres",
+    "content.person": "persons",
 }
 
 VIDEO_QUALITY = {

@@ -93,3 +93,34 @@ class ContentDocument(Document):
     class Django:
         model = models.Content
         fields = ["id", "is_russian", "rating", "rating_count", "date_created"]
+
+
+@registry.register_document
+class PersonDocument(Document):
+    name_ru = fields.TextField(
+        attr="name_ru",
+        fields={
+            # "multiple_words_ngram": fields.TextField(analyzer=analyzers.multiple_words_analyzer),
+            # "strict_edge": fields.TextField(analyzer=analyzers.strict_edge_ngram_analyzer),
+            "medium_edge": fields.TextField(analyzer=analyzers.medium_edge_ngram_analyzer),
+            "soft_edge": fields.TextField(analyzer=analyzers.soft_edge_ngram_analyzer),
+            # "very_soft_edge": fields.TextField(analyzer=analyzers.very_soft_edge_ngram_analyzer),
+            # "strict_ngram": fields.TextField(analyzer=analyzers.strict_ngram_analyzer),
+            "soft_ngram": fields.TextField(analyzer=analyzers.soft_ngram_analyzer),
+        }
+    )
+    name_uz = fields.TextField(
+        attr="name_uz",
+        fields={
+            "medium_edge": fields.TextField(analyzer=analyzers.medium_edge_ngram_analyzer),
+            "soft_edge": fields.TextField(analyzer=analyzers.soft_edge_ngram_analyzer),
+            "soft_ngram": fields.TextField(analyzer=analyzers.soft_ngram_analyzer),
+        }
+    )
+    
+    class Index:
+        name = "persons"
+
+    class Django:
+        model = models.Person
+        fields = "id",

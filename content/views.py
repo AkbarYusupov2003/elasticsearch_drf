@@ -3,6 +3,7 @@ from functools import reduce
 from django.db.models import Case, IntegerField, Value, When
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework import filters
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
@@ -15,6 +16,12 @@ from content import serializers
 from content import documents
 from content import mixins
 
+
+lang = {
+    "ru": "Русский",
+    "en": "Английский",
+    "uz": "Узбекский",
+}
 
 class ContentRetrieveView(mixins.CacheViewMixin, RetrieveAPIView):
     serializer_class = serializers.WebContentSearchSerializer
@@ -490,19 +497,50 @@ class GenreRetrieveAPIView(mixins.CacheViewMixin, APIView):
 
 class PersonListAPIView(mixins.CacheViewMixin, ListAPIView):
     serializer_class = serializers.PersonSerializer
+    filter_backends = filters.SearchFilter,
+    queryset = models.Person.objects.all()
+    search_fields = [f"name_{l}" for l in lang]
     pagination_class = LimitOffsetPagination
     
     def get_queryset(self):
-        try:
-            limit = int(self.request.GET.get("limit", 30))
-            offset = int(self.request.GET.get("offset", 0))
-            search = self.request.GET.get("search")
-        except:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        if search:
-            return models.Person.objects.filter(**{f"name_{self.request.LANGUAGE_CODE}__icontains": search})[offset:limit+offset]
+        IS_ELASTIC = True
+        search_query = self.request.query_params.get('search', None)
+        if IS_ELASTIC and search_query:
+            lang = self.request.LANGUAGE_CODE
+            print("LANG", lang)
+            document = documents.PersonDocument.search().extra(size=100)
+            # 1
+            response1 = document.query(Q({
+                    "match": {f"name_{lang}.soft_edge": {"query": search_query, "fuzziness": "0"}}
+                }))
+            print("response1.count", response1.count())
+            result = [x.id for x in response1]
+            # 2
+            response2 = document.query(Q({
+                "match": {f"name_{lang}.soft_ngram": {"query": search_query, "fuzziness": "0"}}
+            }))
+            for x in response2:
+                result.append(x.id)
+            return models.Person.objects.filter(pk__in=result).order_by(
+                Case(
+                    *[When(pk=pk, then=Value(i)) for i, pk in enumerate(result)],
+                    output_field=IntegerField()
+                ).asc()
+            )
+        
+        
         else:
-            return models.Person.objects.all()[offset:limit+offset]
+            return super().get_queryset()
+        # try:
+        #     limit = int(self.request.GET.get("limit", 30))
+        #     offset = int(self.request.GET.get("offset", 0))
+        #     search = self.request.GET.get("search")
+        # except:
+        #     return Response(status=status.HTTP_400_BAD_REQUEST)
+        # if search:
+        #     return models.Person.objects.filter(**{f"name_{self.request.LANGUAGE_CODE}__icontains": search})[offset:limit+offset]
+        # else:
+        #     return models.Person.objects.all()[offset:limit+offset]
 
     def get(self, request, *args, **kwargs):
         if self.request.LANGUAGE_CODE == "uz" or self.request.LANGUAGE_CODE == "ru":

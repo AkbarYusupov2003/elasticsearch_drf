@@ -117,9 +117,7 @@ class CrowdVideoQualityFilter(admin.SimpleListFilter):
         return qualities
 
     def queryset(self, request, queryset):
-        print("QS: ", self.value(), settings.VIDEO_QUALITY.keys())
         if self.value() in settings.VIDEO_QUALITY.keys():
-            print("HERE")
             return queryset.exclude(**{f"codec_{self.value()}__isnull": True})
         return queryset
 

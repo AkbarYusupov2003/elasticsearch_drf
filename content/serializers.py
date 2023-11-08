@@ -16,11 +16,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    #name = serializers.SerializerMethodField(source="get_name")
+    name = serializers.SerializerMethodField(source="get_name")
     
     class Meta:
         model = models.Genre
-        fields = ("id", "name_ru")
+        fields = ("id", "name")
 
     def get_name(self, obj):
         return getattr(obj, f'name_{self.context["request"].LANGUAGE_CODE}', None)
@@ -101,11 +101,6 @@ class WebContentSearchSerializer(serializers.ModelSerializer):
 
     def get_title(self, obj):
         return getattr(obj, f'title_{self.context["request"].LANGUAGE_CODE}', None)    
-        # request = self.context.get("request")
-        # if getattr(request, "LANGUAGE_CODE", "ru") == "uz":
-        #     return obj.title_uz
-        # else:
-        #     return obj.title_ru
 
 
 class MobileContentSearchSerializer(serializers.ModelSerializer):
@@ -149,3 +144,48 @@ class GenreListSerializer(serializers.ModelSerializer):
 
     def get_name(self, obj):
         return getattr(obj, f'name_{self.context["request"].LANGUAGE_CODE}', None)
+
+
+# Persons
+class PersonSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField(source="get_name")
+    # profile_pic = serializers.SerializerMethodField(source="get_profile_pic")
+    # profile_pic = utils.StdImageField()
+    
+    class Meta:
+        model = models.Person
+        fields = ("id", "name", "profile_pic")
+
+    def get_name(self, obj):
+        return getattr(obj, f'name_{self.context["request"].LANGUAGE_CODE}', None)
+
+    def get_profile_pic(self, obj):
+        if obj.profile_pic:
+            return "?"
+        else:
+            return ""
+
+
+class PersonContentSerializer(serializers.ModelSerializer):
+    category = CategorySerializer()
+    title = serializers.SerializerMethodField(source="get_title")
+    genres = GenreSerializer(many=True)
+    poster_h = utils.StdImageField()
+    poster_v = utils.StdImageField()
+
+    class Meta:
+        model = models.Content
+        fields = (
+            "id",
+            "title",
+            "age_restrictions",
+            "is_russian",
+            "category",
+            "genres",
+            "poster_h",
+            "poster_v",
+        )
+
+    def get_title(self, obj):
+        return getattr(obj, f'title_{self.context["request"].LANGUAGE_CODE}', None)   
+    

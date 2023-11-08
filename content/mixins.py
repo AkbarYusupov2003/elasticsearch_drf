@@ -57,8 +57,8 @@ class CacheViewMixin:
             if not cached_view:
                 cache.set(cache_key, view, settings.CACHE_TTL)
                 print('CREATE CACHE')
-                return view
+                #return view
             print('CACHED')
-            return cached_view
+            #return cached_view
         print('EMPTY CACHE')
         return super().dispatch(request, *args, **kwargs).render()

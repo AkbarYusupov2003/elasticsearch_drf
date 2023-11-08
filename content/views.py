@@ -488,4 +488,70 @@ class GenreRetrieveAPIView(mixins.CacheViewMixin, APIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-# Content->film/season-episode/trailer->
+class PersonListAPIView(mixins.CacheViewMixin, ListAPIView):
+    serializer_class = serializers.PersonSerializer
+    pagination_class = LimitOffsetPagination
+    
+    def get_queryset(self):
+        try:
+            limit = int(self.request.GET.get("limit", 30))
+            offset = int(self.request.GET.get("offset", 0))
+            search = self.request.GET.get("search")
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if search:
+            return models.Person.objects.filter(**{f"name_{self.request.LANGUAGE_CODE}__icontains": search})[offset:limit+offset]
+        else:
+            return models.Person.objects.all()[offset:limit+offset]
+
+    def get(self, request, *args, **kwargs):
+        if self.request.LANGUAGE_CODE == "uz" or self.request.LANGUAGE_CODE == "ru":
+            return super().get(request, args, kwargs)
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class PersonRetrieveAPIView(mixins.CacheViewMixin, APIView):
+    serializer_class = serializers.PersonSerializer
+    
+    def get(self, request, *args, **kwargs):
+        if self.request.LANGUAGE_CODE == "uz" or self.request.LANGUAGE_CODE == "ru":
+            
+            age_restrictions = 18
+            country_code = "UZ"
+            
+            person = get_object_or_404(models.Person, pk=self.kwargs["pk"])
+            
+            res = {
+                "person": self.serializer_class(person, context={"request": request}).data
+            }
+            
+            actor = person.actors.all().filter(
+                age_restrictions__lte=age_restrictions,
+                allowed_countries__in=(country_code,),
+                draft=False
+            )
+            scenario = person.scenario.all().filter(
+                age_restrictions__lte=age_restrictions,
+                allowed_countries__in=(country_code,),
+                draft=False
+            )
+            producer = person.producer.all().filter(
+                age_restrictions__lte=age_restrictions,
+                allowed_countries__in=(country_code,),
+                draft=False
+            )
+            director = person.director.all().filter(
+                age_restrictions__lte=age_restrictions,
+                allowed_countries__in=(country_code,),
+                draft=False
+            )
+            
+            res["actor"] = serializers.PersonContentSerializer(actor, context={"request": request}, many=True).data
+            res["scenario"] = serializers.PersonContentSerializer(scenario, context={"request": request}, many=True).data
+            res["producer"] = serializers.PersonContentSerializer(producer, context={"request": request}, many=True).data
+            res["director"] = serializers.PersonContentSerializer(director, context={"request": request}, many=True).data
+
+            return Response(res, status=status.HTTP_200_OK)
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)

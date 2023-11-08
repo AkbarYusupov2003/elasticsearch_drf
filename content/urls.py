@@ -22,4 +22,9 @@ urlpatterns = [
     path("collections/<int:pk>/", views.CollectionRetrieveAPIView.as_view()),
     path("genres/", views.GenreListAPIView.as_view()),
     path("genres/<int:pk>/", views.GenreRetrieveAPIView.as_view()),
+    #
+    path("persons/", views.PersonListAPIView.as_view()),
+    path("persons/<int:pk>/", views.PersonRetrieveAPIView.as_view()),
+    # person-detail(search by name with elasticsearch)
+    # person-list for main view
 ]

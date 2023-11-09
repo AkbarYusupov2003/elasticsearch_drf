@@ -149,8 +149,8 @@ class GenreListSerializer(serializers.ModelSerializer):
 # Persons
 class PersonSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField(source="get_name")
-    profile_pic = serializers.SerializerMethodField(source="get_profile_pic")
-    # profile_pic = utils.StdImageField()
+    #profile_pic = serializers.SerializerMethodField(source="get_profile_pic")
+    profile_pic = utils.StdImageField(allow_null=True)
     
     class Meta:
         model = models.Person
@@ -158,12 +158,6 @@ class PersonSerializer(serializers.ModelSerializer):
 
     def get_name(self, obj):
         return getattr(obj, f'name_{self.context["request"].LANGUAGE_CODE}', None)
-
-    def get_profile_pic(self, obj):
-        if obj.profile_pic:
-            return utils.StdImageField().get_variations_urls(obj.profile_pic)
-        else:
-            return ""
 
 
 class PersonContentSerializer(serializers.ModelSerializer):

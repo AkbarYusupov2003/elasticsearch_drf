@@ -497,12 +497,15 @@ class GenreRetrieveAPIView(mixins.CacheViewMixin, APIView):
 
 class PersonListAPIView(ListAPIView):
     serializer_class = serializers.PersonSerializer
-    #filter_backends = filters.SearchFilter,
+    filter_backends = filters.SearchFilter,
     queryset = models.Person.objects.all()
     search_fields = [f"name_{l}" for l in lang]
     pagination_class = LimitOffsetPagination
     
     def get_queryset(self):
+        if self.filter_backends:
+            return super().get_queryset()
+        
         search_query = self.request.GET.get('search', None)
         
         if not search_query:
@@ -552,9 +555,10 @@ class PersonListAPIView(ListAPIView):
                         counter = len(result)
 
                     if counter < 10:
+                        print("entered")
                         helper_response = document.query(Q({
                             "match": {f"name_{lang}.person_soft_ngram_analyzer": {"query": search_query, "fuzziness": "0"}}
-                        }))
+                        })).extra(size=10)
                         for x in helper_response:
                             result.append(x.id)
                         counter = len(result)

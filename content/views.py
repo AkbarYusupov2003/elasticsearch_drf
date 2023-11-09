@@ -542,7 +542,7 @@ class PersonListAPIView(ListAPIView):
                     for x in helper_response:
                         result.append(x.id)
                     counter = len(result)
-                    
+
                     if counter == 0:
                         helper_response = document.query(Q({
                             "match": {f"name_{lang}.person_soft_edge_ngram_analyzer": {"query": search_query, "fuzziness": "0"}}
@@ -550,15 +550,15 @@ class PersonListAPIView(ListAPIView):
                         for x in helper_response:
                             result.append(x.id)
                         counter = len(result)
-                    
-                    if counter == 0:
+
+                    if counter < 10:
                         helper_response = document.query(Q({
-                            "match": {f"name_{lang}.person_soft_edge_ngram_analyzer": {"query": search_query, "fuzziness": "1"}}
+                            "match": {f"name_{lang}.person_soft_ngram_analyzer": {"query": search_query, "fuzziness": "0"}}
                         }))
                         for x in helper_response:
                             result.append(x.id)
                         counter = len(result)
-                        
+
                     if counter == 0:
                         helper_response = document.query(Q({
                             "match": {f"name_{lang}.person_very_soft_edge_ngram_analyzer": {"query": search_query, "fuzziness": "0"}}

@@ -4,8 +4,6 @@ from django.dispatch import receiver
 
 from django_elasticsearch_dsl.registries import registry
 
-from content import models
-
 
 @receiver(post_save)
 def update_document(sender, **kwargs):
@@ -55,3 +53,10 @@ def delete_document(sender, **kwargs):
 #     call_command("search_index", "--populate")
 #     # os.system("python manage.py search_index --populate")
 #     print("--- %s seconds ---" % (time.time() - start_time))
+from django.conf import settings
+from elasticsearch import Elasticsearch
+
+def test():
+    print("START")
+    client = Elasticsearch(settings.ELASTICSEARCH_URL)
+    print("INDEX: ", client.indices.get(index="persons"))

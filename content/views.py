@@ -495,52 +495,92 @@ class GenreRetrieveAPIView(mixins.CacheViewMixin, APIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class PersonListAPIView(mixins.CacheViewMixin, ListAPIView):
+class PersonListAPIView(ListAPIView):
     serializer_class = serializers.PersonSerializer
-    filter_backends = filters.SearchFilter,
+    #filter_backends = filters.SearchFilter,
     queryset = models.Person.objects.all()
     search_fields = [f"name_{l}" for l in lang]
     pagination_class = LimitOffsetPagination
     
     def get_queryset(self):
-        IS_ELASTIC = True
-        search_query = self.request.query_params.get('search', None)
-        if IS_ELASTIC and search_query:
+        search_query = self.request.GET.get('search', None)
+            
+        search_again = True
+        while search_again:
+            result = []
             lang = self.request.LANGUAGE_CODE
-            print("LANG", lang)
             document = documents.PersonDocument.search().extra(size=100)
-            # 1
-            response1 = document.query(Q({
-                    "match": {f"name_{lang}.soft_edge": {"query": search_query, "fuzziness": "0"}}
-                }))
-            print("response1.count", response1.count())
-            result = [x.id for x in response1]
-            # 2
-            response2 = document.query(Q({
-                "match": {f"name_{lang}.soft_ngram": {"query": search_query, "fuzziness": "0"}}
+            
+            response = document.query(Q({
+                "match": {f"name_{lang}.person_multiple_words_analyzer": {"query": search_query, "fuzziness": "1"}}
             }))
-            for x in response2:
+            result = [x.id for x in response]
+                    
+            response = document.query(Q({
+                "match": {f"name_{lang}.person_strict_edge_ngram_analyzer": {"query": search_query, "fuzziness": "0"}} # 1?
+            }))
+            for x in response:
                 result.append(x.id)
+            
+            counter = response.count()
+            
+            if counter < 100:
+                helper_response = document.query(Q({
+                    "match": {f"name_{lang}.person_medium_edge_ngram_analyzer": {"query": search_query, "fuzziness": "0"}}
+                }))
+                for x in helper_response:
+                    result.append(x.id)
+                counter = len(result)
+                
+                if counter < 100:
+                    helper_response = document.query(Q({
+                        "match": {f"name_{lang}.person_strict_ngram_analyzer": {"query": search_query, "fuzziness": "0"}}
+                    }))
+                    for x in helper_response:
+                        result.append(x.id)
+                    counter = len(result)
+                    
+                    if counter == 0:
+                        helper_response = document.query(Q({
+                            "match": {f"name_{lang}.person_soft_edge_ngram_analyzer": {"query": search_query, "fuzziness": "0"}}
+                        }))
+                        for x in helper_response:
+                            result.append(x.id)
+                        counter = len(result)
+                    
+                    if counter == 0:
+                        helper_response = document.query(Q({
+                            "match": {f"name_{lang}.person_soft_edge_ngram_analyzer": {"query": search_query, "fuzziness": "1"}}
+                        }))
+                        for x in helper_response:
+                            result.append(x.id)
+                        counter = len(result)
+                        
+                    if counter == 0:
+                        helper_response = document.query(Q({
+                            "match": {f"name_{lang}.person_very_soft_edge_ngram_analyzer": {"query": search_query, "fuzziness": "0"}}
+                        }))
+                        for x in helper_response:
+                            result.append(x.id)
+                        counter = len(result)
+
+            if counter == 0:
+                translated = utils.translate(search_query.lower())
+                if search_query.lower() == translated:
+                    search_again = False
+                else:
+                    search_query = translated
+                    search_again = True
+            else:
+                search_again = False
+                        
+        if not search_again:
             return models.Person.objects.filter(pk__in=result).order_by(
                 Case(
                     *[When(pk=pk, then=Value(i)) for i, pk in enumerate(result)],
                     output_field=IntegerField()
                 ).asc()
             )
-        
-        
-        else:
-            return super().get_queryset()
-        # try:
-        #     limit = int(self.request.GET.get("limit", 30))
-        #     offset = int(self.request.GET.get("offset", 0))
-        #     search = self.request.GET.get("search")
-        # except:
-        #     return Response(status=status.HTTP_400_BAD_REQUEST)
-        # if search:
-        #     return models.Person.objects.filter(**{f"name_{self.request.LANGUAGE_CODE}__icontains": search})[offset:limit+offset]
-        # else:
-        #     return models.Person.objects.all()[offset:limit+offset]
 
     def get(self, request, *args, **kwargs):
         if self.request.LANGUAGE_CODE == "uz" or self.request.LANGUAGE_CODE == "ru":

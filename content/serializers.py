@@ -149,7 +149,7 @@ class GenreListSerializer(serializers.ModelSerializer):
 # Persons
 class PersonSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField(source="get_name")
-    # profile_pic = serializers.SerializerMethodField(source="get_profile_pic")
+    profile_pic = serializers.SerializerMethodField(source="get_profile_pic")
     # profile_pic = utils.StdImageField()
     
     class Meta:
@@ -161,7 +161,7 @@ class PersonSerializer(serializers.ModelSerializer):
 
     def get_profile_pic(self, obj):
         if obj.profile_pic:
-            return "?"
+            return utils.StdImageField().get_variations_urls(obj.profile_pic)
         else:
             return ""
 

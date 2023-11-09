@@ -504,7 +504,10 @@ class PersonListAPIView(ListAPIView):
     
     def get_queryset(self):
         search_query = self.request.GET.get('search', None)
-            
+        
+        if not search_query:
+            return []
+        
         search_again = True
         while search_again:
             result = []
@@ -594,12 +597,10 @@ class PersonRetrieveAPIView(mixins.CacheViewMixin, APIView):
     
     def get(self, request, *args, **kwargs):
         if self.request.LANGUAGE_CODE == "uz" or self.request.LANGUAGE_CODE == "ru":
-            
             age_restrictions = 18
             country_code = "UZ"
             
             person = get_object_or_404(models.Person, pk=self.kwargs["pk"])
-            
             res = {
                 "person": self.serializer_class(person, context={"request": request}).data
             }
